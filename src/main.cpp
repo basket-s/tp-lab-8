@@ -2,28 +2,19 @@
 #include <map>
 #include <vector>
 #include <ctime>
+#include <deque>
 
 using namespace std;
 
-map<tuple<string, string>, vector<string>> dictionary;
-vector<tuple<string, string>> prefixes;
+map<deque<string>, vector<string>> dictionary;
+vector<deque<string>> prefixes;
 
-int textLength = 100, K = 2;
-type_info type = typeid(tuple<string, string>);
+int textLength = 1000, K = 2;
 
-void print (const tuple<string, string> &a){
-    cout << get<0>(a) << " " << get<1>(a) << " ";
-}
+void print (deque<string> d){
 
-template <typename T>
-void createTuple (T a, int k){
-
-    if (k == 0) {
-        type = typeid(T);
-        return;
-    }
-
-    return createTuple (tuple_cat(a, tuple<string>("")), k - 1);
+    for (const auto &i : d)
+        cout << i << " ";
 
 }
 
@@ -33,20 +24,23 @@ int main(){
     freopen ("../out/generatedText.txt", "w", stdout);
 
     string s, prev;
-    tuple<string, string> prefix, prevPrefix, emptyPrefix;
+    deque<string> prefix, prevPrefix;
 
     while (cin >> s) {
 
-        if (!prev.empty()) {
-            prevPrefix = prefix;
-            prefix = make_tuple(prev, s);
-        }
+        if (prefix.size() >= K)
+            prefix.pop_front();
 
-        if (prevPrefix != emptyPrefix)
+        prefix.push_back(s);
+
+        if (!prevPrefix.empty())
             dictionary[prevPrefix].push_back(s);
 
-        if (prefix != emptyPrefix)
+        if (!prefix.empty())
             prefixes.push_back(prefix);
+
+        if (!prev.empty())
+            prevPrefix = prefix;
 
         prev = s;
 
@@ -59,7 +53,12 @@ int main(){
 
     print(prefix);
 
-    while (--textLength && !dictionary[prefix].empty()){
+    while (--textLength){
+
+        while (dictionary[prefix].empty()){
+            randNum = rand() % prefixes.size();
+            prefix = prefixes[randNum];
+        }
 
         auto words = dictionary[prefix];
         randNum = rand() % words.size();
@@ -68,7 +67,8 @@ int main(){
         if (ispunct(words[randNum].back()))
             cout << "\n";
 
-        prefix = make_tuple(get<1>(prefix), words[randNum]);
+        prefix.pop_front();
+        prefix.push_back(words[randNum]);
 
     }
 
