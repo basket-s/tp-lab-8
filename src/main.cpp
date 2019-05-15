@@ -1,119 +1,74 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <deque>
 #include <ctime>
 
 using namespace std;
 
-template <int K>
-class Prefix{
+map<tuple<string, string>, vector<string>> dictionary;
+vector<tuple<string, string>> prefixes;
 
-public:
-    vector<string> words;
+int textLength = 100, K = 2;
+type_info type = typeid(tuple<string, string>);
 
-    Prefix (){
-        words.resize(K);
+void print (const tuple<string, string> &a){
+    cout << get<0>(a) << " " << get<1>(a) << " ";
+}
+
+template <typename T>
+void createTuple (T a, int k){
+
+    if (k == 0) {
+        type = typeid(T);
+        return;
     }
 
-    explicit Prefix (vector<string> words){
+    return createTuple (tuple_cat(a, tuple<string>("")), k - 1);
 
-        if (words.size() != this->words.size())
-            return;
-
-        this->words = words;
-
-    }
-
-    bool operator==(const Prefix & a){
-
-        for (int i = 0; i < K; i++)
-            if (a.words[i] != words[i])
-                return false;
-
-        return true;
-
-    }
-
-    bool operator!=(const Prefix & a){
-
-        return !(a == (*this));
-
-    }
-
-    bool operator<(const Prefix & a){
-
-        for (int i = 0; i < K; i++)
-            if (a.words[i] <= words[i])
-                return false;
-
-        return true;
-
-    }
-
-    bool operator<=(const Prefix & a){
-        return (*this) < a || (*this) == a;
-    }
-
-    bool operator>(const Prefix & a){
-        return !((*this) <= a);
-    }
-
-    bool operator>=(const Prefix & a){
-        return (*this) > a || (*this) == a;
-    }
-
-    void print(ostream & out){
-
-        for (const auto &i : words)
-            out << i << " ";
-
-    }
-
-};
-
-map<Prefix<2>, vector<string>> dictionary;
-vector<Prefix<2>> prefixes;
+}
 
 int main(){
 
-    freopen ("../res/text.txt", "r", stdin);
+    freopen ("../res/sourceText.txt", "r", stdin);
     freopen ("../out/generatedText.txt", "w", stdout);
 
     string s, prev;
-    vector<string> prefix;
+    tuple<string, string> prefix, prevPrefix, emptyPrefix;
 
     while (cin >> s) {
 
-        prefix.push_back(s);
+        if (!prev.empty()) {
+            prevPrefix = prefix;
+            prefix = make_tuple(prev, s);
+        }
 
-        if (!prefixes.empty())
-            dictionary[prefixes.back()].push_back(s);
+        if (prevPrefix != emptyPrefix)
+            dictionary[prevPrefix].push_back(s);
 
-        if (!prev.empty())
-            prefixes.push_back(*(new Prefix<2>(prefix)));
+        if (prefix != emptyPrefix)
+            prefixes.push_back(prefix);
 
         prev = s;
 
     }
 
     srand(time(nullptr));
-    int g = rand() % prefixes.size();
-    Prefix<2> pref = prefixes[g];
-    int len = 10;
+    auto randNum = rand() % prefixes.size();
 
-    pref.print(cout);
+    prefix = prefixes[randNum];
 
-    while (len){
+    print(prefix);
 
-        auto cur = dictionary[pref];
-        g = rand() % cur.size();
-        cout << cur[g] << " ";
-        Prefix<2> pref2;
-        pref2.words.push_back(pref.words.back());
-        pref2.words.push_back(cur[g]);
-        pref = pref2;
-        len--;
+    while (--textLength && !dictionary[prefix].empty()){
+
+        auto words = dictionary[prefix];
+        randNum = rand() % words.size();
+
+        cout << words[randNum] << " ";
+        if (ispunct(words[randNum].back()))
+            cout << "\n";
+
+        prefix = make_tuple(get<1>(prefix), words[randNum]);
 
     }
 
